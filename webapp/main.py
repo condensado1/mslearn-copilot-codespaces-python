@@ -1,5 +1,6 @@
 import os
 import base64
+import hashlib
 from typing import Union
 from os.path import dirname, abspath, join
 from fastapi import FastAPI
@@ -18,13 +19,30 @@ class Body(BaseModel):
     length: Union[int, None] = 20
 
 
+class TokenResponse(BaseModel):
+    token: str
+
+
+class TextRequest(BaseModel):
+    text: str
+
+
+class ChecksumResponse(BaseModel):
+    checksum: str
+
+
+@app.post('/checksum', response_model=ChecksumResponse)
+def checksum(body: TextRequest):
+    return {'checksum': hashlib.sha256(body.text.encode('utf-8')).hexdigest()}
+
+
 @app.get('/')
 def root():
     html_path = join(static_path, "index.html")
     return FileResponse(html_path)
 
 
-@app.post('/generate')
+@app.post('/generate', response_model=TokenResponse)
 def generate(body: Body):
     """
     Generate a pseudo-random token ID of twenty characters by default. Example POST request body:
